@@ -1,0 +1,95 @@
+import heapq
+
+class SocialMediaPost:
+    def __init__(self, datetime, post, author):
+        self.datetime = datetime
+        self.post = post
+        self.author = author
+
+class SocialMediaManager:
+    def __init__(self):
+        self.posts_by_datetime = {}
+        self.root = None  # BST root
+        self.heap = []  # Max-heap simulation
+    
+    def add_post(self, post):
+        # Hash Table for datetime access
+        self.posts_by_datetime[post.datetime] = post
+        # BST insertion for range queries
+        self._insert_bst(post)
+        # Heap for view prioritization
+        heapq.heappush(self.heap, post)
+    
+    def get_post_by_datetime(self, datetime):
+        return self.posts_by_datetime.get(datetime, "Post not found")
+    
+    def _insert_bst(self, post):
+        if not self.root:
+            self.root = TreeNode(post)
+        else:
+            self._bst_insert(self.root, post)
+    
+    def _bst_insert(self, node, post):
+        if post.datetime < node.post.datetime:
+            if node.left is None:
+                node.left = TreeNode(post)
+            else:
+                self._bst_insert(node.left, post)
+        else:
+            if node.right is None:
+                node.right = TreeNode(post)
+            else:
+                self._bst_insert(node.right, post)
+    
+    def find_range(self, start, end):
+        result = []
+        self._find_range(self.root, start, end, result)
+        return result
+    
+    def _find_range(self, node, start, end, result):
+        if node is not None:
+            if start <= node.post.datetime <= end:
+                result.append(node.post)
+            if start < node.post.datetime:
+                self._find_range(node.left, start, end, result)
+            if end > node.post.datetime:
+                self._find_range(node.right, start, end, result)
+    
+    def get_top_post(self):
+        return heapq.heappop(self.heap).post if self.heap else "No posts available"
+
+class TreeNode:
+    def __init__(self, post):
+        self.post = post
+        self.left = None
+        self.right = None
+
+class ViewPost(SocialMediaPost):
+    def __init__(self, datetime, post, author, views):
+        super().__init__(datetime, post, author)
+        self.views = views
+    
+    def __lt__(self, other):
+        # Reverse comparison for max-heap simulation
+        return self.views > other.views
+
+# Example setup and test cases
+manager = SocialMediaManager()
+post1 = ViewPost("2024-04-20T15:30", "Hello, world!", "Alice", 150)
+post2 = ViewPost("2024-04-20T16:00", "Another post", "Bob", 75)
+post3 = ViewPost("2024-04-20T17:00", "More updates", "Charlie", 200)
+
+manager.add_post(post1)
+manager.add_post(post2)
+manager.add_post(post3)
+
+# Testing get_post_by_datetime
+print(manager.get_post_by_datetime("2024-04-20T15:30").post)  # Output: Hello, world!
+
+# Testing find_range
+posts_in_range = manager.find_range("2024-04-20T15:00", "2024-04-20T16:30")
+for post in posts_in_range:
+    print(post.post)  # Output: Hello, world! and Another post
+
+# Testing get_top_post
+print(manager.get_top_post())  # Output: More updates (most views)
