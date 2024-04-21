@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, simpledialog
 import heapq
 
 class SocialMediaPost:
@@ -71,13 +71,24 @@ class SocialMediaManager:
     
     def get_top_post(self):
         return heapq.heappop(self.heap) if self.heap else None
+    
+    def get_all_posts(self):
+        result = []
+        self._in_order_traversal(self.root, result)
+        return result
+
+    def _in_order_traversal(self, node, result):
+        if node:
+            self._in_order_traversal(node.left, result)
+            result.append(node.post)
+            self._in_order_traversal(node.right, result)
 
 # Setting up the GUI
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Social Media Manager")
-        self.geometry("400x300")
+        self.geometry("400x350")
         self.resizable(False, False)
 
         self.manager = SocialMediaManager()
@@ -107,7 +118,8 @@ class Application(tk.Tk):
         ttk.Button(self, text="Add Post", command=self.add_post).grid(column=0, row=4)
         ttk.Button(self, text="Search by Datetime", command=self.search_post).grid(column=1, row=4)
         ttk.Button(self, text="Show Top Post", command=self.show_top_post).grid(column=0, row=5)
-    
+        ttk.Button(self, text="Show All Posts", command=self.show_all_posts).grid(column=1, row=5)
+
     def add_post(self):
         datetime = self.datetime_entry.get()
         post = self.post_entry.get()
@@ -131,6 +143,14 @@ class Application(tk.Tk):
             messagebox.showinfo("Top Post", f"Post: {post.post}\nAuthor: {post.author}\nViews: {post.views}")
         else:
             messagebox.showinfo("No Post", "No posts available.")
+
+    def show_all_posts(self):
+        posts = self.manager.get_all_posts()
+        if posts:
+            result = '\n'.join([f"Datetime: {p.datetime}, Post: {p.post}, Author: {p.author}, Views: {p.views}" for p in posts])
+            messagebox.showinfo("All Posts", result)
+        else:
+            messagebox.showinfo("No Posts", "No posts available.")
 
 app = Application()
 app.mainloop()
