@@ -1,3 +1,5 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
 import heapq
 
 class SocialMediaPost:
@@ -6,22 +8,34 @@ class SocialMediaPost:
         self.post = post
         self.author = author
 
+class ViewPost(SocialMediaPost):
+    def __init__(self, datetime, post, author, views):
+        super().__init__(datetime, post, author)
+        self.views = views
+    
+    def __lt__(self, other):
+        # Reverse comparison for max-heap simulation
+        return self.views > other.views
+
+class TreeNode:
+    def __init__(self, post):
+        self.post = post
+        self.left = None
+        self.right = None
+
 class SocialMediaManager:
     def __init__(self):
         self.posts_by_datetime = {}
-        self.root = None  # BST root
-        self.heap = []  # Max-heap simulation
+        self.root = None
+        self.heap = []
     
     def add_post(self, post):
-        # Hash Table for datetime access
         self.posts_by_datetime[post.datetime] = post
-        # BST insertion for range queries
         self._insert_bst(post)
-        # Heap for view prioritization
         heapq.heappush(self.heap, post)
     
     def get_post_by_datetime(self, datetime):
-        return self.posts_by_datetime.get(datetime, "Post not found")
+        return self.posts_by_datetime.get(datetime, None)
     
     def _insert_bst(self, post):
         if not self.root:
@@ -56,40 +70,67 @@ class SocialMediaManager:
                 self._find_range(node.right, start, end, result)
     
     def get_top_post(self):
-        return heapq.heappop(self.heap).post if self.heap else "No posts available"
+        return heapq.heappop(self.heap) if self.heap else None
 
-class TreeNode:
-    def __init__(self, post):
-        self.post = post
-        self.left = None
-        self.right = None
+# Setting up the GUI
+class Application(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Social Media Manager")
+        self.geometry("400x300")
+        self.resizable(False, False)
 
-class ViewPost(SocialMediaPost):
-    def __init__(self, datetime, post, author, views):
-        super().__init__(datetime, post, author)
-        self.views = views
+        self.manager = SocialMediaManager()
+
+        # Creating widgets
+        self.create_widgets()
     
-    def __lt__(self, other):
-        # Reverse comparison for max-heap simulation
-        return self.views > other.views
+    def create_widgets(self):
+        # Labels and Entries for input
+        ttk.Label(self, text="Datetime:").grid(column=0, row=0)
+        self.datetime_entry = ttk.Entry(self)
+        self.datetime_entry.grid(column=1, row=0)
 
-# Example setup and test cases
-manager = SocialMediaManager()
-post1 = ViewPost("2024-04-20T15:30", "Hello, world!", "Alice", 150)
-post2 = ViewPost("2024-04-20T16:00", "Another post", "Bob", 75)
-post3 = ViewPost("2024-04-20T17:00", "More updates", "Charlie", 200)
+        ttk.Label(self, text="Post:").grid(column=0, row=1)
+        self.post_entry = ttk.Entry(self)
+        self.post_entry.grid(column=1, row=1)
 
-manager.add_post(post1)
-manager.add_post(post2)
-manager.add_post(post3)
+        ttk.Label(self, text="Author:").grid(column=0, row=2)
+        self.author_entry = ttk.Entry(self)
+        self.author_entry.grid(column=1, row=2)
 
-# Testing get_post_by_datetime
-print(manager.get_post_by_datetime("2024-04-20T15:30").post)  # Output: Hello, world!
+        ttk.Label(self, text="Views:").grid(column=0, row=3)
+        self.views_entry = ttk.Entry(self)
+        self.views_entry.grid(column=1, row=3)
 
-# Testing find_range
-posts_in_range = manager.find_range("2024-04-20T15:00", "2024-04-20T16:30")
-for post in posts_in_range:
-    print(post.post)  # Output: Hello, world! and Another post
+        # Buttons
+        ttk.Button(self, text="Add Post", command=self.add_post).grid(column=0, row=4)
+        ttk.Button(self, text="Search by Datetime", command=self.search_post).grid(column=1, row=4)
+        ttk.Button(self, text="Show Top Post", command=self.show_top_post).grid(column=0, row=5)
+    
+    def add_post(self):
+        datetime = self.datetime_entry.get()
+        post = self.post_entry.get()
+        author = self.author_entry.get()
+        views = int(self.views_entry.get())
+        new_post = ViewPost(datetime, post, author, views)
+        self.manager.add_post(new_post)
+        messagebox.showinfo("Success", "Post added successfully")
+    
+    def search_post(self):
+        datetime = self.datetime_entry.get()
+        post = self.manager.get_post_by_datetime(datetime)
+        if post:
+            messagebox.showinfo("Post Found", f"Datetime: {post.datetime}\nPost: {post.post}\nAuthor: {post.author}")
+        else:
+            messagebox.showinfo("Post Not Found", "No post with the given datetime found.")
+    
+    def show_top_post(self):
+        post = self.manager.get_top_post()
+        if post:
+            messagebox.showinfo("Top Post", f"Post: {post.post}\nAuthor: {post.author}\nViews: {post.views}")
+        else:
+            messagebox.showinfo("No Post", "No posts available.")
 
-# Testing get_top_post
-print(manager.get_top_post())  # Output: More updates (most views)
+app = Application()
+app.mainloop()
