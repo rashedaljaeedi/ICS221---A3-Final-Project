@@ -1,0 +1,138 @@
+
+# import necessary libraries
+import networkx as nx # NetworkX library for graph manipulation
+import matplotlib.pyplot as plt # Matplotlib library for plotting
+import numpy as np # NumPy library for numerical computing
+
+# initialize an empty graph
+G = nx.Graph()
+
+# create a dictionary to label the nodes with their corresponding Fortnite locations
+node_labels = {
+    "NY": "New York",
+    "LA": "Los Angles",
+    "MI": "Miami",
+    "CHI": "Chicago",
+    "SE": "Seattle",
+    "BN": "Boston",
+    "SF": "San Francisco",
+    "LV": "Las Vegas",
+    "TX": "Dallas",
+    "ATL": "Atlanta",
+    "DV": "Denver",
+    "WA": "Washington",
+    "PL": "Portland",
+    "PX": "Phoenix",
+    "HS": "Houston",
+    "CE": "Charlotte",
+    "PHL": "Philadelphia",
+    "NV": "Nashville",
+    "MK": "Milwaukee",
+}
+
+# Add each node to the graph using the node_labels dictionary
+for node_id, label in node_labels.items():
+    G.add_node(node_id, label=label)
+
+# Create edges with weights, ensuring all referenced nodes exist
+edges_with_weights = [
+    ("NY", "LA", {"weight": 3, "id": "R1"}),
+    ("LA", "MI", {"weight": 3, "id": "R2"}),
+    ("MI", "NY", {"weight": 3, "id": "R3"}),
+    ("CHI", "SE", {"weight": 5, "id": "R4"}),
+    # Other edges follow the same structure...
+    ("NY", "BN", {"weight": 1, "id": "R19"}), # Assuming "BN" is the intended node instead of "ll"
+    ("BN", "DV", {"weight": 3, "id": "R20"}),
+    ("MK", "PL", {"weight": 8, "id": "R21"}),
+    ("LV", "PL", {"weight": 1, "id": "R22"}),
+    ("LV", "CHI", {"weight": 1, "id": "R23"}),
+    ("PHL", "DV", {"weight": 2, "id": "R24"}),
+    ("CE", "ATL", {"weight": 2, "id": "R25"}),
+    ("NV", "DV", {"weight": 5, "id": "R26"}),
+    ("NV", "WA", {"weight": 4, "id": "R27"}),
+    ("MK", "WA", {"weight": 2, "id": "R28"}),
+    ("SF", "WA", {"weight": 2, "id": "R29"}),
+    ("NY", "WA", {"weight": 6, "id": "R30"}),
+    ("SF", "DV", {"weight": 4, "id": "R31"}),
+    ("SF", "MI", {"weight": 2, "id": "R32"}),
+    ("BN", "LA", {"weight": 3, "id": "R33"}),
+    ("BN", "MI", {"weight": 3, "id": "R34"}),
+    ("SE", "ATL", {"weight": 4, "id": "R35"}),
+    ("BN", "ATL", {"weight": 4, "id": "R36"}),
+    ("SE", "LA", {"weight": 3, "id": "R37"}),
+    ("SE", "NY", {"weight": 4, "id": "R38"}),
+    ("SE", "MK", {"weight": 7, "id": "R39"}),
+    ("PX", "TX", {"weight": 3, "id": "R40"}),
+    ("PX", "SE", {"weight": 4, "id": "R41"}),
+    ("PX", "NY", {"weight": 8, "id": "R42"}),
+    ("HS", "TX", {"weight": 4, "id": "R43"}),
+    ("HS", "ATL", {"weight": 5, "id": "R44"}),
+]
+
+# Add each edge to the graph with the specified weights
+for start, end, edge_data in edges_with_weights:
+    if start in node_labels and end in node_labels:
+        G.add_edge(start, end, weight=edge_data['weight'])
+    else:
+        print(f"Edge from {start} to {end} cannot be added as one of the nodes does not exist.")
+
+
+# add each edge to the graph with the specified weights
+for start, end, edge_data in edges_with_weights:
+    weight = edge_data["weight"]
+    G.add_edge(start, end, weight=weight)
+
+# set the figure size for the plot to ensure all nodes and labels fit (we chose figure size to 18x18 inches for a larger plot)
+plt.figure(figsize=(18, 18))
+
+# define levels for the nodes to organize them into concentric circles
+levels = {
+    1: ["NY", "LA", "MI"],
+    2: ["CHI", "SE", "BN", "SF"],
+    3: ["LV", "TX", "ATL", "DV", "WA"],
+    4: ["PL", "PX", "HS", "CE", "PHL", "NV", "MK"],
+}
+
+# initialize a dictionary to hold the position of each node
+pos = {}
+# set the center point for the circles
+center = np.array([0.5, 0.5])
+
+# define a spacing value to determine the distance between circles
+radius_increment = 0.3
+
+# calculate the position for each node based on its level
+for level, nodes in levels.items():
+    circle_radius = level * radius_increment
+    angle_increment = 2 * np.pi / len(nodes)
+    for i, node in enumerate(nodes):
+        angle = i * angle_increment
+        x = center[0] + circle_radius * np.cos(angle)
+        y = center[1] + circle_radius * np.sin(angle)
+        pos[node] = (x, y)
+
+# draw nodes using the positions and colors defined
+for level, nodes in levels.items():
+    nx.draw_networkx_nodes(G, pos, nodelist=nodes, node_size=700, node_color='lightblue', alpha=0.9)
+
+# draw node labels
+nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=12)
+
+# draw edges with specified colors and labels for weights
+nx.draw_networkx_edges(G, pos, edge_color='gray')
+# Place this right after drawing the edges
+nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'), font_color='red')
+
+# Customizing edge labels to include only weight in red and smaller font size
+edge_labels = nx.get_edge_attributes(G, 'weight')
+for edge, label in edge_labels.items():
+    x = (pos[edge[0]][0] + pos[edge[1]][0]) / 2
+    y = (pos[edge[0]][1] + pos[edge[1]][1]) / 2
+    angle = np.arctan2(pos[edge[1]][1] - pos[edge[0]][1], pos[edge[1]][0] - pos[edge[0]][0])
+
+
+# remove axis for a cleaner look
+plt.axis('off')
+
+# display the plot
+plt.show()
